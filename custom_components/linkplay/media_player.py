@@ -236,11 +236,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     state = STATE_IDLE
 
-    initurl = "http://{0}/httpapi.asp?command=getStatus".format(host)
+    initurl = "https://{0}/httpapi.asp?command=getStatus".format(host)
     
     try:
         websession = async_get_clientsession(hass)
-        response = await websession.get(initurl)
+        response = await websession.get(initurl, verify_ssl=False)
 
         if response.status == HTTPStatus.OK:
             data = await response.json(content_type=None)
@@ -397,7 +397,7 @@ class LinkPlayDevice(MediaPlayerEntity):
 
     async def call_linkplay_httpapi(self, cmd, jsn):
         """Get the latest data from HTTPAPI service."""
-        url = "http://{0}/httpapi.asp?command={1}".format(self._host, cmd)
+        url = "https://{0}/httpapi.asp?command={1}".format(self._host, cmd)
         
         if self._first_update:
             timeout = 10
@@ -407,7 +407,7 @@ class LinkPlayDevice(MediaPlayerEntity):
         try:
             websession = async_get_clientsession(self.hass)
             async with async_timeout.timeout(timeout):
-                response = await websession.get(url)
+                response = await websession.get(url, verify_ssl=False)
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as error:
             _LOGGER.warning(
