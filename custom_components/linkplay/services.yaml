@@ -147,3 +147,23 @@ play_track:
       required: true
       selector:
         text:
+
+play_url:
+  name: Play URL
+  description: Play URL file.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: Entity ID of the player on which the playback wil be execuded.
+      example: media_player.sound_room1
+      required: true
+      selector:
+        entity:
+          integration: wiim_custom
+    url:
+      name: URL
+      description: URL string
+      example: http://xyz.com/test.mp3
+      required: true
+      selector:
+        text:

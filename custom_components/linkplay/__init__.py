@@ -20,6 +20,7 @@ SERVICE_SNAP = 'snapshot'
 SERVICE_REST = 'restore'
 SERVICE_LIST = 'get_tracks'
 SERVICE_PLAY = 'play_track'
+SERVICE_PLAY_URL = 'play_url'
 
 ATTR_MASTER = 'master'
 ATTR_PRESET = 'preset'
@@ -29,6 +30,7 @@ ATTR_SNAP = 'switchinput'
 ATTR_SELECT = 'input_select'
 ATTR_SOURCE = 'source'
 ATTR_TRACK = 'track'
+ATTR_URL = 'url'
 
 SERVICE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_ENTITY_ID): cv.comp_entity_ids
@@ -61,6 +63,11 @@ SNAP_SERVICE_SCHEMA = vol.Schema({
 PLYTRK_SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.entity_id,
     vol.Required(ATTR_TRACK): cv.template
+})
+
+PLAY_URL_SERVICE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+    vol.Required(ATTR_URL): cv.string
 })
 
 _LOGGER = logging.getLogger(__name__)
@@ -136,6 +143,12 @@ def setup(hass, config):
                 if device.entity_id in entity_ids:
                     _LOGGER.debug("**PLAY TRACK** entity: %s; track: %s", device.entity_id, track)
                     await device.async_play_track(track)
+        elif service.service == SERVICE_PLAY_URL:
+            url = service.data.get(ATTR_URL)
+            for device in entities:
+                if device.entity_id in entity_ids:
+                    _LOGGER.debug("**PLAY URL** entity: %s; url: %s", device.entity_id, url)
+                    await device.call_wiim_httpapi("setPlayerCmd:play:{0}".format(url), None)
 
 
     hass.services.async_register(
@@ -152,5 +165,7 @@ def setup(hass, config):
         DOMAIN, SERVICE_REST, async_service_handle, schema=REST_SERVICE_SCHEMA)
     hass.services.async_register(
         DOMAIN, SERVICE_PLAY, async_service_handle, schema=PLYTRK_SERVICE_SCHEMA)
+    hass.services.async_register(
+        DOMAIN, SERVICE_PLAY_URL, async_service_handle, schema=PLAY_URL_SERVICE_SCHEMA)
 
     return True
