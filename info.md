@@ -1,10 +1,12 @@
-# Linkplay-based speakers and sound devices
+# Linkplay-adjacent WiiM speakers
 
-This component allows you to integrate control of audio devices based on Linkplay chipset into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. This version mostly rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
+This component allows you to integrate control of WiiM Mini/Pro audio devices into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. The [source of this fork](https://github.com/nagyrobi/home-assistant-custom-components-linkplay) was rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
 
-Fully compatible with Mini Media Player card for Lovelace UI by kalkih, including speaker group management.
+This fork adds support for WiiM Mini/Pro devices. As I don't actually have either of these devices, and was helping someone else get them to work, I can't support this custom component without a LOT of back and forth from you, dear reader. So if you post an issue, be prepared to include all relevant log entries, and be willing to engage in some async discussion!
 
-[Configuration details and documentation](https://github.com/nagyrobi/home-assistant-custom-components-linkplay#installation)
+Fully compatible with [Mini Media Player card for Lovelace UI](https://github.com/kalkih/mini-media-player) by kalkih, including speaker group management.
+
+[Configuration details and documentation](https://github.com/spdustin/home-assistant-custom-components-linkplay#installation)
 
 
 ## Supported features:
@@ -26,6 +28,7 @@ There are quite a few manufacturers and devices that operate on the basis of Lin
 ## Component authors & contributors
     "@nicjo814",
     "@limych",
-    "@nagyrobi"
+    "@nagyrobi",
+    "@spdustin"
 
-[Support forum](https://community.home-assistant.io/t/linkplay-integration/33878/133)
+[Support forum](https://community.home-assistant.io/t/linkplay-integration/33878/133) (tag spdustin)

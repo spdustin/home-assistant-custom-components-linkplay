@@ -1,6 +1,12 @@
-# Linkplay-based speakers and sound devices
+# Linkplay-adjacent WiiM speakers
 
-This component allows you to integrate control of audio devices based on Linkplay A31 chipset into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. This version rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
+This component allows you to integrate control of WiiM Mini/Pro audio devices into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. The [source of this fork](https://github.com/nagyrobi/home-assistant-custom-components-linkplay) was rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
+
+This fork adds support for WiiM Mini/Pro devices. As I don't actually have either of these devices, and was helping someone else get them to work, I can't support this custom component without a LOT of back and forth from you, dear reader. So if you post an issue, be prepared to include all relevant log entries, and be willing to engage in some async discussion!
+
+The rest of this `README` is the same as the LinkPlay component from @nagyrobi.
+
+---
 
 Fully compatible with [Mini Media Player card for Lovelace UI](https://github.com/kalkih/mini-media-player) by kalkih, including speaker group management.
 
@@ -11,7 +17,7 @@ Fully compatible with [Mini Media Player card for Lovelace UI](https://github.co
 * Add the configuration to your configuration.yaml.
 * Restart Home-Assistant again.
 
-**Breaking change from v2:** After upgrading to v3 the configured devices will be re-added to HA with a new unique identifier tied to 
+**Breaking change from v2:** After upgrading to v3 the configured devices will be re-added to HA with a new unique identifier tied to
 the hardware UUID of the Linkplay modules, instead of IP address. This will result in having the original
 entity_id of the preiously configured devices _disabled_ and having added as new with entity_id _2 or similar.
 
@@ -36,10 +42,10 @@ media_player:
       announce_volume_increase: 12
       icecast_metadata: 'StationNameSongTitle'
       multiroom_wifidirect: False
-      sources: 
+      sources:
         {
-          'optical': 'TV sound', 
-          'line-in': 'Radio tuner', 
+          'optical': 'TV sound',
+          'line-in': 'Radio tuner',
           'bluetooth': 'Bluetooth',
           'udisk': 'USB stick',
           'http://94.199.183.186:8000/jazzy-soul.mp3': 'Jazzy Soul',
@@ -56,35 +62,35 @@ media_player:
 
 ### Configuration Variables
 
-**host:**  
+**host:**
   *(string)* *(Required)* The IP address of the Linkplay unit.
 
-**name:**  
+**name:**
   *(string)* *(Required)* Name that Home Assistant will generate the `entity_id` based on. It is also the base of the friendly name seen in the dashboard, but will be overriden by the device name set in the Android app.
 
-**uuid:**  
+**uuid:**
   *(string)* *(Optional)* Hardware UUID of the player. Can be read out from the attibutes of the entity. Set it manually to that value to handle double-added entity cases when Home Assistant starts up without the Linkplay device being on the network at that moment.
 
-**volume_step:**  
-  *(integer)* *(Optional)* Step size in percent to change volume when calling `volume_up` or `volume_down` service against the media player. Defaults to `5`, can be a number between `1` and `25`. 
-  
+**volume_step:**
+  *(integer)* *(Optional)* Step size in percent to change volume when calling `volume_up` or `volume_down` service against the media player. Defaults to `5`, can be a number between `1` and `25`.
+
 **announce_volume_increase:**
   *(integer)* *(Optional)* Play announcements (typically TTS) with this amount higher volume. Defaults to `15`, can be a number between `0` and `50`.
 
-**sources:**  
+**sources:**
   *(list)* *(Optional)* A list with available source inputs on the device. If not specified, the integration will assume that all the supported source input types are present on it:
 ```yaml
-'bluetooth': 'Bluetooth', 
-'line-in': 'Line-in', 
-'line-in2': 'Line-in 2', 
-'optical': 'Optical', 
-'co-axial': 'Coaxial', 
-'HDMI': 'HDMI', 
-'udisk': 'USB disk', 
-'TFcard': 'SD card', 
-'RCA': 'RCA', 
-'XLR': 'XLR', 
-'FM': 'FM', 
+'bluetooth': 'Bluetooth',
+'line-in': 'Line-in',
+'line-in2': 'Line-in 2',
+'optical': 'Optical',
+'co-axial': 'Coaxial',
+'HDMI': 'HDMI',
+'udisk': 'USB disk',
+'TFcard': 'SD card',
+'RCA': 'RCA',
+'XLR': 'XLR',
+'FM': 'FM',
 'cd': 'CD'
 ```
 The sources can be renamed to your preference (change only the part _after_ **:** ). You can also specify http-based (Icecast / Shoutcast) internet radio streams as input sources:
@@ -96,8 +102,8 @@ If you don't want a source selector to be available at all, set option to empty:
 
 _Note:_ **Don't** use HTTP**S** streams. Linkplay chipsets seem to have limited supporrt for HTTPS. Besides, using HTTPS is useless in practice for a public webradio stream, it's a waste of computig resources for this kind of usage both on server and player side.
 
-**common_sources:**  
-  *(list)* *(Optional)* Another list with sources which should appear on the device. Useful if you have multiple devices on the network and you'd like to maintain a common list of http-based internet radio stream sources for all of them in a single file with `!include linkplay-radio-sources.yaml`. The included file should be in the same place as the main config file containing `linkplay` platform.   
+**common_sources:**
+  *(list)* *(Optional)* Another list with sources which should appear on the device. Useful if you have multiple devices on the network and you'd like to maintain a common list of http-based internet radio stream sources for all of them in a single file with `!include linkplay-radio-sources.yaml`. The included file should be in the same place as the main config file containing `linkplay` platform.
   For example:
 ```yaml
 {
@@ -106,16 +112,16 @@ _Note:_ **Don't** use HTTP**S** streams. Linkplay chipsets seem to have limited 
 }
 ```
 
-**icecast_metadata:**  
+**icecast_metadata:**
   *(string)* *(Optional)* When playing icecast webradio streams, how to handle metadata. Valid values here are `'Off'`, `'StationName'`, `'StationNameSongTitle'`, defaulting to `'StationName'` when not set. With `'Off'`, Home Assistant will not try do request any metadata from the IceCast server. With `'StationName'`, Home Assistant will request only once when starting the playback the stream name from the headers, and display it in the `media_title` property of the player. With `'StationNameSongTitle'` Home Assistant will request the stream server periodically for icy-metadata, and read out `StreamTitle`, trying to figure out correct values for `media_title` and `media_artist`, in order to gather cover art information from LastFM service (see below). Note that metadata retrieval success depends on how the icecast radio station servers and encoders are configured, if they don't provide proper infos or they don't display correctly, it's better to turn it off or just use StationName to save server load. There's no standard way enforced on the servers, it's up to the server maintainers how it works.
 
-**lastfm_api_key:**  
+**lastfm_api_key:**
   *(string)* *(Optional)* API key to LastFM service to get album covers. Register for one.
 
-**multiroom_wifidirect:**  
+**multiroom_wifidirect:**
   *(boolean)* *(Optional)* Set to `True` to override the default router mode used by the component with wifi-direct connection mode (more details below).
 
-**led_off:**  
+**led_off:**
   *(boolean)* *(Optional)* Set to `True` to turn off the LED on the front panel of the Arylic devices (works only for this brand).
 
 
