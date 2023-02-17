@@ -120,11 +120,13 @@ CONF_MULTIROOM_WIFIDIRECT = 'multiroom_wifidirect'
 CONF_VOLUME_STEP = 'volume_step'
 CONF_LEDOFF = 'led_off'
 CONF_UUID = 'uuid'
+CONF_USE_HTTPS = 'use_https'
 
 DEFAULT_ICECAST_UPDATE = 'StationName'
 DEFAULT_MULTIROOM_WIFIDIRECT = False
 DEFAULT_LEDOFF = False
 DEFAULT_VOLUME_STEP = 5
+DEFAULT_USE_HTTPS = False
 
 DEBUGSTR_ATTR = True
 LASTFM_API_BASE = 'http://ws.audioscrobbler.com/2.0/?method='
@@ -208,6 +210,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_LASTFM_API_KEY): cv.string,
         vol.Optional(CONF_UUID, default=''): cv.string,
         vol.Optional(CONF_VOLUME_STEP, default=DEFAULT_VOLUME_STEP): vol.All(int, vol.Range(min=1, max=25)),
+        vol.Optional(CONF_USE_HTTPS, default=DEFAULT_USE_HTTPS): cv.boolean,
     }
 )
 
@@ -232,11 +235,12 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     led_off = config.get(CONF_LEDOFF)
     volume_step = config.get(CONF_VOLUME_STEP)
     lastfm_api_key = config.get(CONF_LASTFM_API_KEY)
+    use_https = config.get(CONF_USE_HTTPS)
     uuid = config.get(CONF_UUID)
 
     state = STATE_IDLE
-
-    initurl = "https://{0}/httpapi.asp?command=getStatusEx".format(host)
+    prefix = "https" if use_https else "http"
+    initurl = "{0}://{1}/httpapi.asp?command=getStatusEx".format(prefix,host)
 
     try:
         websession = async_get_clientsession(hass)
@@ -281,6 +285,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                             volume_step,
                             lastfm_api_key,
                             uuid,
+                            use_https,
                             state,
                             hass)
 
@@ -300,10 +305,12 @@ class LinkPlayDevice(MediaPlayerEntity):
                  volume_step,
                  lastfm_api_key,
                  uuid,
+                 use_https,
                  state,
                  hass):
         """Initialize the media player."""
         self._uuid = uuid
+        self._use_https = use_https
         self._fw_ver = '1.0.0'
         self._mcu_ver = ''
         requester = AiohttpRequester(UPNP_TIMEOUT)
@@ -397,7 +404,8 @@ class LinkPlayDevice(MediaPlayerEntity):
 
     async def call_linkplay_httpapi(self, cmd, jsn):
         """Get the latest data from HTTPAPI service."""
-        url = "https://{0}/httpapi.asp?command={1}".format(self._host, cmd)
+        prefix = "https" if self._use_https else "http"
+        url = "{0}://{1}/httpapi.asp?command={2}".format(prefix, self._host, cmd)
 
         if self._first_update:
             timeout = 10

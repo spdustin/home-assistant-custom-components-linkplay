@@ -4,11 +4,9 @@ This component allows you to integrate control of WiiM Mini/Pro audio devices in
 
 This fork adds support for WiiM Mini/Pro devices. As I don't actually have either of these devices, and was helping someone else get them to work, I can't support this custom component without a LOT of back and forth from you, dear reader. So if you post an issue, be prepared to include all relevant log entries, and be willing to engage in some async discussion!
 
-The rest of this `README` is the same as the LinkPlay component from @nagyrobi.
-
 ---
 
-Fully compatible with [Mini Media Player card for Lovelace UI](https://github.com/kalkih/mini-media-player) by kalkih, including speaker group management.
+*Mostly* compatible with [Mini Media Player card for Lovelace UI](https://github.com/kalkih/mini-media-player) by kalkih, including speaker group management. `toggle_power` may or may not work, depending on your device.
 
 ## Installation
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
@@ -33,10 +31,11 @@ It is recommended to create static DHCP leases in your network router to ensure 
 To add Linkplay units to your installation, add the following to your `configuration.yaml` file:
 
 ```yaml
-# Example configuration.yaml entry
+# Example configuration.yaml entry for WiiM device
 media_player:
     - platform: linkplay
       host: 192.168.1.11
+      use_https: True
       name: Sound Room1
       volume_step: 10
       announce_volume_increase: 12
@@ -53,6 +52,7 @@ media_player:
 
     - platform: linkplay
       host: 192.168.1.12
+      use_https: True
       name: Sound Room2
       uuid: 'FF31F09E82A6BBC1A2CB6D80'
       icecast_metadata: 'Off'  # valid values: 'Off', 'StationName', 'StationNameSongTitle'
@@ -62,68 +62,50 @@ media_player:
 
 ### Configuration Variables
 
-**host:**
-  *(string)* *(Required)* The IP address of the Linkplay unit.
+| Config Property            | Type      | Required? | Default       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------- | --------- | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `host`                     | `string`  | **YES**   |               | The IP address of the Linkplay unit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `use_https`                | `boolean` |           | `False`       | Device requires an HTTPS connection to its API (such as WiiM Mini/Pro)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `name`                     | `string`  | **YES**   |               | Name that Home Assistant will generate the `entity_id` based on. It is also the base of the friendly name seen in the dashboard, but will be overriden by the device name set in the Android app.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `uuid`                     | `string`  |           |               | Hardware UUID of the player. Can be read out from the attibutes of the entity. Set it manually to that value to handle double-added entity cases when Home Assistant starts up without the Linkplay device being on the network at that moment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `volume_step`              | `integer` |           | `5`           | Step size in percent to change volume when calling `volume_up` or `volume_down` service against the media player. Defaults to `5`, can be a number between `1` and `25`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `announce_volume_increase` | `integer` |           | `15`          | Play announcements (typically TTS) with this amount higher volume. Defaults to `15`, can be a number between `0` and `50`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `sources`                  | `list`    |           |               | A list with available source inputs on the device. If not specified, the integration will assume that all the supported source input types are present on it.<br/><br/>The sources can be renamed to your preference (change only the part _after_ **:** ).<br/><br/>You can also specify http-based (Icecast / Shoutcast) internet radio streams as input sources.<br/><br/>If you don't want a source selector to be available at all, set option to empty: `sources: {}` (see example below)<br/><br/>_Note:_ **Don't** use HTTP**S** streams. Linkplay chipsets seem to have limited supporrt for HTTPS. Besides, using HTTPS is useless in practice for a public webradio stream, it's a waste of computig resources for this kind of usage both on server and player side.                                                                                                                                                                                                                                                                                                                                                |
+| `common_sources`           | `list`    |           |               | Another list with sources which should appear on the device. Useful if you have multiple devices on the network and you'd like to maintain a common list of http-based internet radio stream sources for all of them in a single file with `!include linkplay-radio-sources.yaml`. The included file should be in the same path as the main config file containing the `linkplay` platform.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `icecast_metadata`         | `string`  |           | `StationName` | When playing icecast webradio streams, how to handle metadata. Valid values here are `'Off'`, `'StationName'`, `'StationNameSongTitle'`, defaulting to `'StationName'` when not set. <br/><br/>With `'Off'`, Home Assistant will not try do request any metadata from the IceCast server.<br/><br/>With `'StationName'`, Home Assistant will request only once when starting the playback the stream name from the headers, and display it in the `media_title` property of the player.<br/><br/>With `'StationNameSongTitle'` Home Assistant will request the stream server periodically for icy-metadata, and read out `StreamTitle`, trying to figure out correct values for `media_title` and `media_artist`, in order to gather cover art information from LastFM service (see below).<br/><br/>Note that metadata retrieval success depends on how the icecast radio station servers and encoders are configured, if they don't provide proper infos or they don't display correctly, it's better to turn it off or just use StationName to save server load. There's no standard way enforced on the servers, it's up to the server maintainers how it works. |
+| `lastfm_api_key`           | `string`  |           |               | API key to LastFM service to get album covers. [Register for one](https://www.last.fm/api/authentication).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `multiroom_wifidirect`     | `boolean` |           | `False`       | Set to `True` to override the default router mode used by the component with wifi-direct connection mode (more details below).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `led_off`                  | `boolean` |           | `False`       | Set to `True` to turn off the LED on the front panel of the Arylic devices (works only for this brand).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
-**name:**
-  *(string)* *(Required)* Name that Home Assistant will generate the `entity_id` based on. It is also the base of the friendly name seen in the dashboard, but will be overriden by the device name set in the Android app.
-
-**uuid:**
-  *(string)* *(Optional)* Hardware UUID of the player. Can be read out from the attibutes of the entity. Set it manually to that value to handle double-added entity cases when Home Assistant starts up without the Linkplay device being on the network at that moment.
-
-**volume_step:**
-  *(integer)* *(Optional)* Step size in percent to change volume when calling `volume_up` or `volume_down` service against the media player. Defaults to `5`, can be a number between `1` and `25`.
-
-**announce_volume_increase:**
-  *(integer)* *(Optional)* Play announcements (typically TTS) with this amount higher volume. Defaults to `15`, can be a number between `0` and `50`.
-
-**sources:**
-  *(list)* *(Optional)* A list with available source inputs on the device. If not specified, the integration will assume that all the supported source input types are present on it:
+#### example config for `sources` and `common_sources`:
 ```yaml
-'bluetooth': 'Bluetooth',
-'line-in': 'Line-in',
-'line-in2': 'Line-in 2',
-'optical': 'Optical',
-'co-axial': 'Coaxial',
-'HDMI': 'HDMI',
-'udisk': 'USB disk',
-'TFcard': 'SD card',
-'RCA': 'RCA',
-'XLR': 'XLR',
-'FM': 'FM',
-'cd': 'CD'
+sources:
+  {
+    'bluetooth': 'Bluetooth',
+    'line-in': 'Line-in',
+    'line-in2': 'Line-in 2',
+    'optical': 'Optical',
+    'co-axial': 'Coaxial',
+    'HDMI': 'HDMI',
+    'udisk': 'USB disk',
+    'TFcard': 'SD card',
+    'RCA': 'RCA',
+    'XLR': 'XLR',
+    'FM': 'FM',
+    'cd': 'CD',
+    'http://94.199.183.186:8000/jazzy-soul.mp3': 'Jazzy Soul'
+  }
+
+# Example for defining common_sources inline:
+common_sources:
+  {
+    'http://1.2.3.4:8000/your_radio': 'Your Radio',
+    'http://icecast.streamserver.tld/mountpoint.aac': 'Another radio'
+  }
+
+# Example for defining common_sources with an include file:
+common_sources: !include linkplay-radio-sources.yaml
 ```
-The sources can be renamed to your preference (change only the part _after_ **:** ). You can also specify http-based (Icecast / Shoutcast) internet radio streams as input sources:
-```yaml
-'http://1.2.3.4:8000/your_radio': 'Your Radio',
-'http://icecast.streamserver.tld/mountpoint.aac': 'Another radio'
-```
-If you don't want a source selector to be available at all, set option to empty: `sources: {}`.
-
-_Note:_ **Don't** use HTTP**S** streams. Linkplay chipsets seem to have limited supporrt for HTTPS. Besides, using HTTPS is useless in practice for a public webradio stream, it's a waste of computig resources for this kind of usage both on server and player side.
-
-**common_sources:**
-  *(list)* *(Optional)* Another list with sources which should appear on the device. Useful if you have multiple devices on the network and you'd like to maintain a common list of http-based internet radio stream sources for all of them in a single file with `!include linkplay-radio-sources.yaml`. The included file should be in the same place as the main config file containing `linkplay` platform.
-  For example:
-```yaml
-{
-  'http://1.2.3.4:8000/your_radio': 'Your Radio',
-  'http://icecast.streamserver.tld/mountpoint.aac': 'Another radio'
-}
-```
-
-**icecast_metadata:**
-  *(string)* *(Optional)* When playing icecast webradio streams, how to handle metadata. Valid values here are `'Off'`, `'StationName'`, `'StationNameSongTitle'`, defaulting to `'StationName'` when not set. With `'Off'`, Home Assistant will not try do request any metadata from the IceCast server. With `'StationName'`, Home Assistant will request only once when starting the playback the stream name from the headers, and display it in the `media_title` property of the player. With `'StationNameSongTitle'` Home Assistant will request the stream server periodically for icy-metadata, and read out `StreamTitle`, trying to figure out correct values for `media_title` and `media_artist`, in order to gather cover art information from LastFM service (see below). Note that metadata retrieval success depends on how the icecast radio station servers and encoders are configured, if they don't provide proper infos or they don't display correctly, it's better to turn it off or just use StationName to save server load. There's no standard way enforced on the servers, it's up to the server maintainers how it works.
-
-**lastfm_api_key:**
-  *(string)* *(Optional)* API key to LastFM service to get album covers. Register for one.
-
-**multiroom_wifidirect:**
-  *(boolean)* *(Optional)* Set to `True` to override the default router mode used by the component with wifi-direct connection mode (more details below).
-
-**led_off:**
-  *(boolean)* *(Optional)* Set to `True` to turn off the LED on the front panel of the Arylic devices (works only for this brand).
-
 
 ## Multiroom
 
@@ -331,7 +313,8 @@ There are quite a few manufacturers and devices that operate on the basis of Lin
 ## Home Assistant component authors & contributors
     "@nicjo814",
     "@limych",
-    "@nagyrobi"
+    "@nagyrobi",
+    "@spdustin"
 
 ## Home Assistant component License
 
@@ -340,6 +323,7 @@ MIT License
 - Copyright (c) 2019 Niclas Berglind nicjo814
 - Copyright (c) 2019—2020 Andrey "Limych" Khrolenok
 - Copyright (c) 2020 nagyrobi Robert Horvath-Arkosi
+- Copyright (c) 2023 Dustin Miller (spdustin)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
