@@ -1335,7 +1335,7 @@ class LinkPlayDevice(MediaPlayerEntity):
                 self._nometa = False
 
             if media_source.is_media_source_id(media_id):
-                play_item = await media_source.async_resolve_media(self.hass, media_id)
+                play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
                 if media_id.find('radio_browser') != -1:  # radios are an exception, be treated by server redirect checker and icecast metadata parser
                     self._playing_mediabrowser = False
                 else:
