@@ -1343,7 +1343,7 @@ class LinkPlayDevice(MediaPlayerEntity):
                 self._nometa = False
 
             if media_source.is_media_source_id(media_id):
-                play_item = await media_source.async_resolve_media(self.hass, media_id)
+                play_item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
                 if media_id.find('radio_browser') != -1:  # radios are an exception, be treated by server redirect checker and icecast metadata parser
                     self._playing_mediabrowser = False
                 else:
@@ -1829,19 +1829,19 @@ class LinkPlayDevice(MediaPlayerEntity):
 
         #_LOGGER.debug('For: %s Looking for IceCast metadata in: %s', self._name, self._media_uri_final)
 
-        def NiceToICY(self):
-            class InterceptedHTTPResponse():
-                pass
-            import io
-            line = self.fp.readline().replace(b"ICY 200 OK\r\n", b"HTTP/1.0 200 OK\r\n")
-            InterceptedSelf = InterceptedHTTPResponse()
-            InterceptedSelf.fp = io.BufferedReader(io.BytesIO(line))
-            InterceptedSelf.debuglevel = self.debuglevel
-            InterceptedSelf._close_conn = self._close_conn
-            return ORIGINAL_HTTP_CLIENT_READ_STATUS(InterceptedSelf)
+#        def NiceToICY(self):
+#            class InterceptedHTTPResponse():
+#                pass
+#            import io
+#            line = self.fp.readline().replace(b"ICY 200 OK\r\n", b"HTTP/1.0 200 OK\r\n")
+#            InterceptedSelf = InterceptedHTTPResponse()
+#            InterceptedSelf.fp = io.BufferedReader(io.BytesIO(line))
+#            InterceptedSelf.debuglevel = self.debuglevel
+#            InterceptedSelf._close_conn = self._close_conn
+#            return ORIGINAL_HTTP_CLIENT_READ_STATUS(InterceptedSelf)
 
-        ORIGINAL_HTTP_CLIENT_READ_STATUS = urllib.request.http.client.HTTPResponse._read_status
-        urllib.request.http.client.HTTPResponse._read_status = NiceToICY
+#        ORIGINAL_HTTP_CLIENT_READ_STATUS = urllib.request.http.client.HTTPResponse._read_status
+#        urllib.request.http.client.HTTPResponse._read_status = NiceToICY
 
         try:
             request = urllib.request.Request(self._media_uri_final, headers={'Icy-MetaData': '1','User-Agent': 'VLC/3.0.16 LibVLC/3.0.16'})  # request metadata
