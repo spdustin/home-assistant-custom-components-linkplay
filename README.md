@@ -1,3 +1,7 @@
+# Archive notice:
+
+The [upstream linkplay component](https://github.com/nagyrobi/home-assistant-custom-components-linkplay) supports WiiM Mini/Pro audio devices now; support was added on June 29, 2023. Since I don't have one if these devices anyway, I'm archiving this fork.
+
 # Linkplay-adjacent WiiM speakers
 
 This component allows you to integrate control of WiiM Mini/Pro audio devices into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. The [source of this fork](https://github.com/nagyrobi/home-assistant-custom-components-linkplay) was rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
